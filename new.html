@@ -1,0 +1,300 @@
+<html>
+	<head>
+		<style>
+			.black
+				{
+				background-image: url(blackcheck.png);
+				}
+			.white
+				{
+				background-image: url(whitecheck.png);
+				}
+				.empty
+				{
+				background-image: url('');
+				}
+		</style>
+	</head>
+	<body>
+
+		<input type = "text" id = "num">
+		<button id = "gen">Just do it!</button>
+		<script src="jquery.min.js"></script>
+		<table id = "tab">
+			<script>
+			var selectedCheckColor = '';
+			var selectedCheck = [];
+			var prevSelectedCheck = [];
+			var board = [];
+			var checkSelected = false;
+			var possibleMoves = [];
+			var isPlayer1 = true;
+			var increment;
+			var checkingCell;
+			var colCounter;
+			var movesCounter = 0;
+			var boardMark;
+			var checkRow;
+			var checkCol;
+			var isEating;
+			var eatenCheckRow;
+			var eatenCheckCol;
+			
+			function canMove(goToRow, goToCol)
+				{
+				var retVal = false;
+				for (var i = 0; i < 4; i++)
+					{
+					if (goToRow == possibleMoves[i][0])
+						{
+						if (goToCol == possibleMoves[i][1])
+						retVal = true;
+						}
+					if (retVal == true)
+						break;
+					}
+				return retVal;
+				}
+				
+			function findPossibleMoves(row, col)
+					{
+					movesCounter = 0;
+					colCounter = 0;
+					increment = isPlayer1 ? -1 : 1;
+					//проверяем ячейку спереди-слева
+					
+					if ((((board[parseInt(row)+increment][parseInt(col)-1] == 'b') && (isPlayer1 == true)) || ((board[parseInt(row)+increment][parseInt(col)-1] == 'w') && (isPlayer1 == false))) && (board[parseInt(row) + 2 * increment][parseInt(col) - 2] == 'e'))
+						{
+						possibleMoves[movesCounter] = [];
+						possibleMoves[movesCounter][colCounter] = parseInt(row) + 2 * increment;
+						possibleMoves[movesCounter][colCounter + 1] = parseInt(col) - 2;
+						isEating = true;
+						}
+					else
+						{
+						if (board[parseInt(row)+increment][parseInt(col)-1] == 'e')
+							{
+							possibleMoves[movesCounter] = [];
+							possibleMoves[movesCounter][colCounter] = parseInt(row) + increment;
+							possibleMoves[movesCounter][colCounter + 1] = parseInt(col) - 1;
+							}
+						else
+							{
+							possibleMoves[movesCounter] = [];
+							possibleMoves[movesCounter][colCounter] = parseInt(row);
+							possibleMoves[movesCounter][colCounter + 1] = parseInt(col);
+							}
+						}
+					movesCounter++;
+					
+					//проверяем ячейку спереди-справа
+					if ((((board[parseInt(row)+increment][parseInt(col)+1] == 'b') && (isPlayer1 == true)) || ((board[parseInt(row)+increment][parseInt(col)+1] == 'w') && (isPlayer1 == false))) && (board[parseInt(row) + 2 * increment][parseInt(col) + 2] == 'e'))
+						{
+						possibleMoves[movesCounter] = [];
+						possibleMoves[movesCounter][colCounter] = parseInt(row) + 2 * increment;
+						possibleMoves[movesCounter][colCounter + 1] = parseInt(col) + 2;
+						isEating = true;
+						}
+					else
+						{
+						if (board[parseInt(row)+increment][parseInt(col)+1] == 'e')
+							{
+							possibleMoves[movesCounter] = [];
+							possibleMoves[movesCounter][colCounter] = parseInt(row) + increment;
+							possibleMoves[movesCounter][colCounter + 1] = parseInt(col) + 1;
+							}
+						else
+							{
+							possibleMoves[movesCounter] = [];
+							possibleMoves[movesCounter][colCounter] = parseInt(row);
+							possibleMoves[movesCounter][colCounter + 1] = parseInt(col);
+							}
+						}
+					increment = isPlayer1 ? 1 : -1;
+					movesCounter++;
+					
+					//проверяем ячейку сзади-слева
+					if ((parseInt(row) <= 1) && (parseInt(row) >= 6))
+						{
+						if ((((board[parseInt(row)+increment][parseInt(col)-1] == 'b') && (isPlayer1 == true)) || ((board[parseInt(row)+increment][parseInt(col)-1] == 'w') && (isPlayer1 == false))) && (board[parseInt(row) + 2 * increment][parseInt(col) - 2] == 'e'))
+							{
+							possibleMoves[movesCounter] = [];
+							possibleMoves[movesCounter][colCounter] = parseInt(row) + 2 * increment;
+							possibleMoves[movesCounter][colCounter + 1] = parseInt(col) - 2;
+							isEating = true;
+							}
+						}
+					else
+						{
+						possibleMoves[movesCounter] = [];
+						possibleMoves[movesCounter][colCounter] = parseInt(row);
+						possibleMoves[movesCounter][colCounter + 1] = parseInt(col);
+						}
+					movesCounter++;
+					
+					//проверяем ячейку сзади-справа
+					if ((parseInt(row) <= 1) && (parseInt(row) >= 6))
+						{
+						if ((((board[parseInt(row)+increment][parseInt(col)+1] == 'b') && (isPlayer1 == true)) || ((board[parseInt(row)+increment][parseInt(col)+1] == 'w') && (isPlayer1 == false))) && (board[parseInt(row) + 2 * increment][parseInt(col) + 2] == 'e'))
+							{
+							possibleMoves[movesCounter] = [];
+							possibleMoves[movesCounter][colCounter] = parseInt(row) + 2 * increment;
+							possibleMoves[movesCounter][colCounter + 1] = parseInt(col) + 2;
+							isEating = true;
+							}
+						}
+					else
+						{
+						possibleMoves[movesCounter] = [];
+						possibleMoves[movesCounter][colCounter] = parseInt(row);
+						possibleMoves[movesCounter][colCounter + 1] = parseInt(col);
+						}
+					}
+					
+			function checkMove(thisCheck)
+				{
+				var prevRow = 0;
+				var prevCol = 0;
+				thisCheck.removeClass();
+				thisCheck.addClass(selectedCheckColor);
+				ElRet(prevSelectedCheck['row'], prevSelectedCheck['col']).addClass('empty');
+				ElRet(prevSelectedCheck['row'], prevSelectedCheck['col']).animate({opacity: 1}, "fast");
+				if (selectedCheckColor == 'white')
+					boardMark = 'w';
+				else
+					boardMark = 'b';
+				checkRow = parseInt(thisCheck.attr('row'));
+				checkCol = parseInt(thisCheck.attr('col'));
+				board[checkRow][checkCol] = boardMark;
+				checkRow = parseInt(prevSelectedCheck['row']);
+				checkCol = parseInt(prevSelectedCheck['col']);
+				board[checkRow][checkCol] = 'e';
+				if (isEating == true)
+					{
+					//нахождение съеденной шашки
+					eatenCheckRow = thisCheck.attr('row');
+					eatenCheckRow = eatenCheckRow - (parseInt(eatenCheckRow) - checkRow)/2;
+					eatenCheckCol = thisCheck.attr('col');
+					eatenCheckCol = eatenCheckCol - (parseInt(eatenCheckCol) - checkCol)/2;
+					board[eatenCheckRow][eatenCheckCol] = 'e';	
+					ElRet(eatenCheckRow, eatenCheckCol).removeClass().addClass('empty');
+					isEating = false;
+					}
+				checkSelected = false;
+				isPlayer1 = (isPlayer1 == true) ? false : true;
+				}
+				
+			function ElRet(row, col)
+				{
+				El = $('tr').eq(row).children('td').eq(col);
+				return El;
+				}
+				
+			$('#gen').click(function() {
+			var count = $('#num').val();
+			var res;
+			var colorcount = true;
+			var colorstart = true;
+			if (count >= 7)
+			{
+			for (var i = 0; i < count; i++)
+				{
+					res += "<tr>";
+					board[i] = [];
+					//скрипт заполнения строки
+					for (var j = 0; j < count; j++)
+						{
+							res += '<td height="50" width="50" row="';
+							res += i;
+							res += '" col="'.concat(j, '"');
+							if (colorcount == true)
+								res += ' bgcolor="#ffffff" '
+							else
+								res += ' bgcolor="#000000" ';
+							board[i][j] = 'e';
+							if ((i <= 2) && (colorcount == true))
+								{
+								res += ' class = "black"';
+								board[i][j] = 'b';
+								}
+							else
+								{
+								if ((i >= count-3) && (colorcount == true))
+									{
+									res += ' class = "white"';
+									board[i][j] = 'w';
+									}
+								else
+									{
+									res += ' class = "empty"';
+									}
+								}
+							res += '></td>';
+						if (colorcount == true)
+							colorcount = false;
+						else
+							colorcount = true;
+						}
+					res += "</tr>";
+					$('#tab').append(res);
+					res = '';
+					if (count % 2 == 0)
+						if (colorstart == true)
+							colorstart = colorcount = false;
+						else
+							colorstart = colorcount = true;
+				}
+			}
+			$('td').click(function() {
+			selectedCheck['row'] = $(this).attr('row');
+			selectedCheck['col'] = $(this).attr('col');
+			if ((selectedCheck['col'] == prevSelectedCheck['col']) && (selectedCheck['row'] == prevSelectedCheck['row']))
+				{
+				if (checkSelected == true)
+					{
+					$(this).animate({opacity: 1}, "fast");
+					checkSelected = false;
+					}
+				else
+					{
+					$(this).animate({opacity: 0.5}, "fast");
+					checkSelected = true;
+					}
+				}
+			else
+				{
+				if (checkSelected == true)
+					{
+					if (selectedCheckColor != 'empty')
+						{
+						if (((isPlayer1 == true) && (selectedCheckColor == 'white')) || ((isPlayer1 == false) && (selectedCheckColor == 'black')))
+							{
+							if (canMove($(this).attr('row'), $(this).attr('col')) == true)
+								checkMove($(this))
+							else
+								{
+								ElRet(prevSelectedCheck['row'], prevSelectedCheck['col']).animate({opacity: 1}, "fast");
+								checkSelected = false;
+								}
+							}
+						}
+					}
+				else
+					{
+					findPossibleMoves(selectedCheck['row'], selectedCheck['col']);
+					$(this).animate({opacity: 0.5}, "fast");
+					selectedCheckColor = $(this).attr('class');
+					if (selectedCheckColor != 'empty')
+						{
+						checkSelected = true;
+						}
+					}
+				}
+			prevSelectedCheck['row'] = selectedCheck['row'];
+			prevSelectedCheck['col'] = selectedCheck['col'];
+				});
+			});
+			</script>
+		</table>
+	</body>
+</html>
